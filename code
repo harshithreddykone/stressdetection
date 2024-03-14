@@ -1,0 +1,74 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from keras.applications import MobileNet
+from keras.layers import Flatten, Dense
+from keras.models import Model
+from keras.preprocessing.image import ImageDataGenerator , img_to_array, load_img
+from keras.applications.mobilenet import MobileNet, preprocess_input 
+from keras.losses import categorical_crossentropy
+
+
+base_model = MobileNet( input_shape=(224,224,3), include_top= False )
+
+for layer in base_model.layers:
+  layer.trainable = False
+
+
+x = Flatten()(base_model.output)
+x = Dense(units=7 , activation='softmax' )(x)
+
+
+model = Model(base_model.input, x)
+  val_datagen = ImageDataGenerator(rescale = 1./255 )
+
+val_data = val_datagen.flow_from_directory(directory= "test", 
+                                           target_size=(224,224), 
+                                           batch_size=32,
+                                  )
+def plotImages(img_arr, label):
+
+  count = 0
+  for im, l in zip(img_arr,label) :
+    plt.imshow(im)
+    plt.title(im.shape)
+    plt.axis = False
+    plt.show()
+    
+    count += 1
+    if count == 10:
+      break
+## having early stopping and model check point 
+
+from keras.callbacks import ModelCheckpoint, EarlyStopping
+
+# early stopping
+es = EarlyStopping(monitor='val_accuracy', min_delta= 0.01 , patience= 5, verbose= 1, mode='auto')
+
+# model check point
+mc = ModelCheckpoint(filepath="best_model.h5", monitor= 'val_accuracy', verbose= 1, save_best_only= True, mode = 'auto')
+
+# puting call back in a list 
+call_back = [es, mc]
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.optimizers import Adam
+from keras.losses import binary_crossentropy
+from keras.metrics import Accuracy
+
+# Define the input dimension based on your data
+input_dim = 32  # Replace with the actual input dimension
+
+# Create a Sequential model
+model = Sequential()
+
+# Add layers to the model
+model.add(Dense(1, activation='sigmoid', input_shape=(input_dim,)))  # Specify input_shape
+
+# Compile the model
+model.compile(optimizer=Adam(learning_rate=0.001), loss=binary_crossentropy, metrics=[Accuracy()])
+
+# Now you can access the model summary
+model.summary()
+
+# Continue with the rest of your code
